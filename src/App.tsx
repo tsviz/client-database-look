@@ -28,6 +28,7 @@ function App() {
   const [error, setError] = useState('')
 
   // Registration state
+  const [newCustomerId, setNewCustomerId] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [address, setAddress] = useState('')
@@ -83,22 +84,30 @@ function App() {
   }
 
   const handleRegisterCustomer = async () => {
-    if (!firstName.trim() || !lastName.trim() || !address.trim()) {
-      setError('Por favor complete todos los campos obligatorios')
+    if (!newCustomerId.trim() || !firstName.trim() || !lastName.trim() || !address.trim()) {
+      setError('Por favor complete todos los campos obligatorios (ID, Nombre, Apellido y Dirección)')
+      return
+    }
+
+    const id = parseInt(newCustomerId.trim())
+    if (isNaN(id) || id <= 0) {
+      setError('El ID debe ser un número válido mayor que 0')
+      return
+    }
+
+    // Check if ID already exists
+    const existingCustomers = customers || []
+    const existingCustomer = existingCustomers.find(c => c.id === id)
+    if (existingCustomer) {
+      setError(`Ya existe un cliente con el ID ${id}. Por favor use un ID diferente.`)
       return
     }
 
     setIsRegistering(true)
     setError('')
 
-    // Generate new ID (highest existing ID + 1)
-    const existingCustomers = customers || []
-    const newId = existingCustomers.length > 0 
-      ? Math.max(...existingCustomers.map(c => c.id)) + 1 
-      : 1
-
     const newCustomer: Customer = {
-      id: newId,
+      id: id,
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       address: address.trim(),
@@ -115,6 +124,7 @@ function App() {
     setRegisteredCustomer(newCustomer)
 
     // Clear form
+    setNewCustomerId('')
     setFirstName('')
     setLastName('')
     setAddress('')
@@ -125,7 +135,7 @@ function App() {
 
     setIsRegistering(false)
     
-    toast.success(`Cliente registrado exitosamente con ID: ${newId}`)
+    toast.success(`Cliente registrado exitosamente con ID: ${id}`)
   }
 
   const clearRegistration = () => {
@@ -306,6 +316,17 @@ function App() {
                   </CardTitle>
                 </CardHeader>
               <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="newCustomerId">ID Cliente *</Label>
+                  <Input
+                    id="newCustomerId"
+                    type="number"
+                    placeholder="Ingrese ID único del cliente"
+                    value={newCustomerId}
+                    onChange={(e) => setNewCustomerId(e.target.value)}
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">Nombre *</Label>
@@ -392,7 +413,7 @@ function App() {
                 </Button>
 
                 <p className="text-sm text-muted-foreground text-center">
-                  * Campos obligatorios
+                  * Campos obligatorios: ID Cliente, Nombre, Apellido y Dirección
                 </p>
               </CardContent>
             </Card>
