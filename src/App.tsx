@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Label } from '@/components/ui/label'
-import { MagnifyingGlass, User, MapPin, UserPlus, Users } from '@phosphor-icons/react'
+import { MagnifyingGlass, User, MapPin, UserPlus, Users, Trash, ArrowLeft } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 
@@ -23,6 +23,7 @@ interface Customer {
 function App() {
   // Tab state
   const [activeTab, setActiveTab] = useState('search')
+  const [previousTab, setPreviousTab] = useState<string>('')
   
   // Search state
   const [customerId, setCustomerId] = useState('')
@@ -41,6 +42,9 @@ function App() {
   const [country, setCountry] = useState('')
   const [isRegistering, setIsRegistering] = useState(false)
   const [registeredCustomer, setRegisteredCustomer] = useState<Customer | null>(null)
+
+  // Deletion state
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const [customers, setCustomers] = useKV<Customer[]>('customers', [])
 
@@ -146,6 +150,52 @@ function App() {
   const clearRegistration = () => {
     setRegisteredCustomer(null)
     setError('')
+  }
+
+  const handleDeleteCustomer = async (customer: Customer) => {
+    if (!confirm(`¿Está seguro que desea eliminar al cliente ${customer.firstName} ${customer.lastName} (ID: ${customer.id})?`)) {
+      return
+    }
+
+    setIsDeleting(true)
+    setError('')
+
+    // Remove customer from the array
+    setCustomers(currentCustomers => 
+      (currentCustomers || []).filter(c => c.id !== customer.id)
+    )
+
+    // Clear search result if we're deleting the currently displayed customer
+    if (searchResult && searchResult.id === customer.id) {
+      setSearchResult(null)
+    }
+
+    setIsDeleting(false)
+    toast.success(`Cliente ${customer.firstName} ${customer.lastName} eliminado exitosamente`)
+
+    // If we came from view-all tab, go back to it
+    if (previousTab === 'view-all') {
+      setActiveTab('view-all')
+      setPreviousTab('')
+    }
+  }
+
+  const viewCustomerDetails = (customer: Customer, fromTab: string) => {
+    setCustomerId(customer.id.toString())
+    setSearchResult(customer)
+    setError('')
+    setPreviousTab(fromTab)
+    setActiveTab('search')
+  }
+
+  const goBackToPreviousTab = () => {
+    if (previousTab) {
+      setActiveTab(previousTab)
+      setPreviousTab('')
+      setSearchResult(null)
+      setCustomerId('')
+      setError('')
+    }
   }
 
   return (
@@ -285,13 +335,36 @@ function App() {
                     </div>
                   </div>
 
-                  <Button 
-                    onClick={clearSearch}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    Nueva Búsqueda
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    {previousTab && (
+                      <Button 
+                        onClick={goBackToPreviousTab}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <ArrowLeft size={16} />
+                        Volver a {previousTab === 'view-all' ? 'Todos los Clientes' : 'Búsqueda'}
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      onClick={clearSearch}
+                      variant="outline"
+                      className={previousTab ? 'flex-1' : 'w-full'}
+                    >
+                      Nueva Búsqueda
+                    </Button>
+                    
+                    <Button 
+                      onClick={() => handleDeleteCustomer(searchResult)}
+                      disabled={isDeleting}
+                      variant="destructive"
+                      className="flex items-center gap-2"
+                    >
+                      <Trash size={16} />
+                      {isDeleting ? 'Eliminando...' : 'Eliminar Cliente'}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -525,12 +598,7 @@ function App() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
-                                  setCustomerId(customer.id.toString())
-                                  setSearchResult(customer)
-                                  setError('')
-                                  setActiveTab('search')
-                                }}
+                                onClick={() => viewCustomerDetails(customer, 'view-all')}
                                 className="text-accent border-accent hover:bg-accent hover:text-accent-foreground"
                               >
                                 Ver Detalles
