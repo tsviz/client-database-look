@@ -36,6 +36,7 @@ function App() {
   const [zipCode, setZipCode] = useState('')
   const [country, setCountry] = useState('')
   const [isRegistering, setIsRegistering] = useState(false)
+  const [registeredCustomer, setRegisteredCustomer] = useState<Customer | null>(null)
 
   const [customers, setCustomers] = useKV<Customer[]>('customers', [])
 
@@ -110,6 +111,9 @@ function App() {
     // Add to customers array
     setCustomers(currentCustomers => [...(currentCustomers || []), newCustomer])
 
+    // Show registered customer info
+    setRegisteredCustomer(newCustomer)
+
     // Clear form
     setFirstName('')
     setLastName('')
@@ -122,6 +126,11 @@ function App() {
     setIsRegistering(false)
     
     toast.success(`Cliente registrado exitosamente con ID: ${newId}`)
+  }
+
+  const clearRegistration = () => {
+    setRegisteredCustomer(null)
+    setError('')
   }
 
   return (
@@ -235,13 +244,67 @@ function App() {
           </TabsContent>
 
           <TabsContent value="register" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserPlus className="text-primary" />
-                  Registrar Nuevo Cliente
-                </CardTitle>
-              </CardHeader>
+            {registeredCustomer && (
+              <Card className="animate-in fade-in duration-300 border-green-200 bg-green-50/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-green-700">
+                    <User className="text-green-600" />
+                    ¡Cliente Registrado Exitosamente!
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="bg-green-100 p-4 rounded-lg border border-green-200">
+                    <div className="text-center space-y-2">
+                      <p className="text-sm font-medium text-green-700">ID del Cliente Asignado:</p>
+                      <p className="text-3xl font-bold text-green-800">{registeredCustomer.id}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-green-700">
+                          Nombre Completo
+                        </label>
+                        <p className="text-base font-semibold text-green-800">
+                          {registeredCustomer.firstName} {registeredCustomer.lastName}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-green-700 flex items-center gap-1">
+                        <MapPin size={16} />
+                        Dirección Registrada
+                      </label>
+                      <div className="bg-green-100 p-3 rounded-md space-y-1 border border-green-200">
+                        <p className="font-medium text-green-800">{registeredCustomer.address}</p>
+                        {registeredCustomer.city && (
+                          <p className="text-green-700">{registeredCustomer.city}, {registeredCustomer.state} {registeredCustomer.zipCode}</p>
+                        )}
+                        <p className="text-green-700">{registeredCustomer.country}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button 
+                    onClick={clearRegistration}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    Registrar Otro Cliente
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {!registeredCustomer && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserPlus className="text-primary" />
+                    Registrar Nuevo Cliente
+                  </CardTitle>
+                </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -333,6 +396,7 @@ function App() {
                 </p>
               </CardContent>
             </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
