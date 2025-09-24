@@ -21,6 +21,9 @@ interface Customer {
 }
 
 function App() {
+  // Tab state
+  const [activeTab, setActiveTab] = useState('search')
+  
   // Search state
   const [customerId, setCustomerId] = useState('')
   const [isSearching, setIsSearching] = useState(false)
@@ -65,7 +68,9 @@ function App() {
     if (customer) {
       setSearchResult(customer)
     } else {
-      setError('Cliente no encontrado. Verifique el ID e intente nuevamente.')
+      // Clear any previous customer data and show creation message
+      setSearchResult(null)
+      setError('not-found')
     }
 
     setIsSearching(false)
@@ -155,7 +160,7 @@ function App() {
           </p>
         </div>
 
-        <Tabs defaultValue="search" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="search" className="flex items-center gap-2">
               <MagnifyingGlass size={16} />
@@ -195,10 +200,45 @@ function App() {
                   </Button>
                 </div>
 
-                {error && (
+                {error && error !== 'not-found' && (
                   <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
+                )}
+
+                {error === 'not-found' && (
+                  <Card className="border-orange-200 bg-orange-50/50">
+                    <CardContent className="p-6 text-center space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-orange-800 font-medium">
+                          Lamentablemente, el cliente no está en sistema.
+                        </p>
+                        <p className="text-orange-700">
+                          ¿Desea crearlo?
+                        </p>
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                        <Button 
+                          onClick={() => {
+                            // Switch to register tab and pre-fill the ID
+                            setNewCustomerId(customerId)
+                            setError('')
+                            setActiveTab('register')
+                          }}
+                          className="bg-orange-600 hover:bg-orange-700 text-white"
+                        >
+                          Sí, crear cliente
+                        </Button>
+                        <Button 
+                          onClick={clearSearch}
+                          variant="outline"
+                          className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
               </CardContent>
             </Card>
