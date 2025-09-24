@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Label } from '@/components/ui/label'
-import { MagnifyingGlass, User, MapPin, UserPlus } from '@phosphor-icons/react'
+import { MagnifyingGlass, User, MapPin, UserPlus, Users } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { toast } from 'sonner'
 
@@ -161,7 +161,7 @@ function App() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="search" className="flex items-center gap-2">
               <MagnifyingGlass size={16} />
               Buscar Cliente
@@ -169,6 +169,10 @@ function App() {
             <TabsTrigger value="register" className="flex items-center gap-2">
               <UserPlus size={16} />
               Registrar Cliente
+            </TabsTrigger>
+            <TabsTrigger value="view-all" className="flex items-center gap-2">
+              <Users size={16} />
+              Ver Todos
             </TabsTrigger>
           </TabsList>
 
@@ -458,6 +462,88 @@ function App() {
               </CardContent>
             </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="view-all" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="text-primary" />
+                  Todos los Clientes ({(customers || []).length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!customers || customers.length === 0 ? (
+                  <div className="text-center py-12 space-y-4">
+                    <Users size={48} className="mx-auto text-muted-foreground/50" />
+                    <div className="space-y-2">
+                      <p className="text-lg font-medium text-muted-foreground">
+                        No hay clientes registrados
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Registre su primer cliente para comenzar
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => setActiveTab('register')}
+                      className="bg-accent hover:bg-accent/90 text-accent-foreground"
+                    >
+                      Registrar Primer Cliente
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {customers.map((customer) => (
+                      <Card key={customer.id} className="border-l-4 border-l-accent hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <User size={16} className="text-accent" />
+                                <span className="text-sm font-medium text-muted-foreground">ID: {customer.id}</span>
+                              </div>
+                              <p className="text-lg font-semibold text-foreground">
+                                {customer.firstName} {customer.lastName}
+                              </p>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <MapPin size={16} className="text-accent" />
+                                <span className="text-sm font-medium text-muted-foreground">Dirección</span>
+                              </div>
+                              <div className="text-sm text-foreground">
+                                <p className="font-medium">{customer.address}</p>
+                                {customer.city && (
+                                  <p>{customer.city}, {customer.state} {customer.zipCode}</p>
+                                )}
+                                <p>{customer.country}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-end">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setCustomerId(customer.id.toString())
+                                  setSearchResult(customer)
+                                  setError('')
+                                  setActiveTab('search')
+                                }}
+                                className="text-accent border-accent hover:bg-accent hover:text-accent-foreground"
+                              >
+                                Ver Detalles
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
